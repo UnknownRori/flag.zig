@@ -51,7 +51,8 @@ pub const ArgsParser = struct {
         for (self.options.items) |option| {
             switch (option) {
                 .bool => |a| {
-                    try writer.print("    -{s} {s}\n\n", .{ a.name, a.description });
+                    try writer.print("    -{s}\n", .{a.name});
+                    try writer.print("         {s}\n\n", .{a.description});
                 },
                 .size => |a| {
                     try writer.print("    -{s} <NUMBER>\n", .{a.name});
