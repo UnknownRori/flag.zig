@@ -122,6 +122,7 @@ pub const ArgsParser = struct {
         self.*.argc_value = self.*.args.?.len;
         self.program_name = std.fs.path.basename(self.args.?[0]);
 
+        var has_something = false;
         if (self.argc_value > 1) {
             var index: usize = 1;
             while (index < self.argc_value) {
@@ -133,6 +134,7 @@ pub const ArgsParser = struct {
                             .bool => |a| {
                                 if (std.mem.eql(u8, arg[1..], a.name)) {
                                     a.value.* = true;
+                                    has_something = true;
                                 }
                             },
                             .size => |a| {
@@ -142,6 +144,7 @@ pub const ArgsParser = struct {
                                     };
                                     a.value.* = @intCast(number);
                                     index += 1;
+                                    has_something = true;
                                 }
                             },
                             .string => |a| {
@@ -153,6 +156,7 @@ pub const ArgsParser = struct {
                                         a.value.* = next_arg;
                                     }
                                     index += 1;
+                                    has_something = true;
                                 }
                             },
                         }
@@ -161,7 +165,7 @@ pub const ArgsParser = struct {
                 index += 1;
             }
         }
-        return self.argc_value > 1;
+        return has_something;
     }
 
     pub fn deinit(self: *Self) void {
