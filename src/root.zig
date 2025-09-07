@@ -169,7 +169,9 @@ pub const ArgsParser = struct {
     }
 
     pub fn deinit(self: *Self) void {
-        std.process.argsFree(self.allocator, self.args.?);
+        if (self.args != null) {
+            std.process.argsFree(self.allocator, self.args.?);
+        }
         for (self.options.items) |option| {
             switch (option) {
                 .bool => |a| {
@@ -179,12 +181,21 @@ pub const ArgsParser = struct {
                     self.allocator.destroy(b.value);
                 },
                 .string => |b| {
-                    if (b.value.* != null) {
-                        self.allocator.destroy(b.value);
-                    }
+                    self.allocator.destroy(b.value);
                 },
             }
         }
         self.options.deinit();
     }
 };
+
+test "Test memory leak" {
+    const testing = std.testing;
+    var args = ArgsParser.init(testing.allocator);
+    defer args.deinit();
+    _ = try args.flag_str("index", null, "Index a directory");
+    _ = try args.flag_str("search", null, "Search a term");
+    _ = try args.flag_bool("serve", "Start a local server http://localhost:6969");
+    _ = try args.flag_bool("help", "Show this help menu");
+    _ = args.program();
+}
