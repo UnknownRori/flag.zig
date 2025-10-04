@@ -6,17 +6,18 @@ fn usage(stderr_writer: anytype, args: *lib.ArgsParser, program: []const u8) !vo
     try stderr_writer.print("USAGE: {s} [OPTIONS]\n", .{program});
     try stderr_writer.print("OPTIONS:\n", .{});
     try args.options_print(stderr_writer);
+    try stderr_writer.flush();
 }
 
 pub fn main() !void {
-    const stderr = std.io.getStdErr();
-    const stderr_writer = stderr.writer();
+    const stderr = std.fs.File.stderr();
+    var stderr_writer = stderr.writer(&.{}).interface;
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    var args = lib.ArgsParser.init(allocator);
+    var args = try lib.ArgsParser.init(allocator);
     defer args.deinit();
     const help = try args.flag_bool("help", "Show this help program");
     const size = try args.flag_size("count", 69, "Give count this this thing");
@@ -24,12 +25,12 @@ pub fn main() !void {
     const prog = args.program();
 
     if (!try args.parse()) {
-        try usage(stderr_writer, &args, prog.*.?);
+        try usage(&stderr_writer, &args, prog.*.?);
         return;
     }
 
     if (help.*) {
-        try usage(stderr_writer, &args, prog.*.?);
+        try usage(&stderr_writer, &args, prog.*.?);
         return;
     }
 

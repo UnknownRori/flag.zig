@@ -29,10 +29,10 @@ pub const ArgsParser = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: Allocator) Self {
+    pub fn init(allocator: Allocator) !Self {
         return Self{
             .allocator = allocator,
-            .options = ArrayList(Flag).init(allocator),
+            .options = try ArrayList(Flag).initCapacity(allocator, 10),
             .args = null,
             .program_name = null,
             .argc_value = 0,
@@ -77,7 +77,7 @@ pub const ArgsParser = struct {
     pub fn flag_str(self: *Self, name: []const u8, default: ?[]const u8, description: []const u8) !*const ?[]const u8 {
         const state = try self.allocator.create(?[]const u8);
         state.* = default orelse null;
-        try self.options.append(Flag{ .string = .{
+        try self.options.append(self.allocator, Flag{ .string = .{
             .value = state,
             .name = name,
             .description = description,
@@ -90,7 +90,7 @@ pub const ArgsParser = struct {
     pub fn flag_size(self: *Self, name: []const u8, default: ?usize, description: []const u8) !*const usize {
         const state = try self.allocator.create(usize);
         state.* = default orelse 0;
-        try self.options.append(Flag{ .size = .{
+        try self.options.append(self.allocator, Flag{ .size = .{
             .value = state,
             .name = name,
             .description = description,
@@ -103,7 +103,7 @@ pub const ArgsParser = struct {
     pub fn flag_bool(self: *Self, name: []const u8, description: []const u8) !*const bool {
         const state = try self.allocator.create(bool);
         state.* = false;
-        try self.options.append(Flag{ .bool = .{
+        try self.options.append(self.allocator, Flag{ .bool = .{
             .value = state,
             .name = name,
             .description = description,
@@ -186,7 +186,7 @@ pub const ArgsParser = struct {
                 },
             }
         }
-        self.options.deinit();
+        self.options.deinit(self.allocator);
     }
 };
 
